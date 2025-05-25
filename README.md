@@ -3,7 +3,7 @@ Free Open Source Cookie Checker For Everyone
 
 # Availability
 - Linux
-- Tutorial Below
+- Windows Tutorial Below
 
 # Tutorial
 
