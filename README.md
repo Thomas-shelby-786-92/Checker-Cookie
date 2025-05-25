@@ -4,7 +4,7 @@ Free Open Source Cookie Checker For Everyone
 # Availability
 - Mac 
 - Linux
-
+- Soon Available On Windows
 # Installation
 Run Following Commands
 `sudo apt update`
@@ -15,4 +15,5 @@ Run Following Commands
 - Place your Cookie files inside `cookie` folder
 - Run `python3 checker.py`
 
+# Links
 Join My Discord: https://discord.gg/JjDgy47Pkp
