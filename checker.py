@@ -30,10 +30,24 @@ def is_cookie_valid(service, cookie_dict):
         session.cookies.update(cookie_dict)
 
         url = BASE_URLS[service]["url"]
-        response = session.get(url, allow_redirects=False)
+        response = session.get(url, allow_redirects=True)
 
-        return response.status_code in [200, 302]
-    except:
+        if response.status_code != 200:
+            return False
+
+        content = response.text.lower()
+
+        if service == "netflix":
+            # Netflix logged-in users will see "profile-gate-label" or user-specific data
+            return "profile-gate-label" in content or "profile-gate" in content or "/SignOut" in content
+
+        elif service == "spotify":
+            # Spotify dashboard includes 'Your Library' or user's display name
+            return "your library" in content or "profile" in content or "account overview" in content
+
+        return False
+    except Exception as e:
+        print(Fore.RED + f"Error checking cookie: {e}")
         return False
 
 def is_valid_cookie_format(cookie_data, domain_required):
