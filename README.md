@@ -4,7 +4,7 @@ Free Open Source Cookie Checker For Everyone
 # Availability
 - Mac 
 - Linux
-- 
+
 # Installation
 Run Following Commands
 `sudo apt update`
