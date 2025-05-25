@@ -4,7 +4,15 @@ Free Open Source Cookie Checker For Everyone
 # Availability
 - Mac 
 - Linux
-- Soon Available On Windows
+- Tutorial Below
+
+# Tutorial
+
+
+
+https://github.com/user-attachments/assets/ac9bbd1b-74dd-4fea-b47a-3406a4c381b0
+
+
 
 # Installation
 
