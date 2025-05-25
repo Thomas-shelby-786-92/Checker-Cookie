@@ -5,14 +5,16 @@ Free Open Source Cookie Checker For Everyone
 - Mac 
 - Linux
 - Soon Available On Windows
+
 # Installation
 
 Run the following commands:
 
-```bash
-sudo apt update
-sudo apt install python3
-pip install -r requirements.txt
+```sudo apt update```
+
+```sudo apt install python3```
+
+```pip install -r requirements.txt```
 
 # Usage
 - Place your Cookie files inside `cookie` folder
