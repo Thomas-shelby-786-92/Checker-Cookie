@@ -1,26 +1,28 @@
 import os
 import json
 import requests
+from http.cookies import SimpleCookie
 from colorama import Fore, Style, init
 from tqdm import tqdm
 
 init(autoreset=True)
 
-# Supported services
 BASE_URLS = {
     "netflix": {"url": "https://www.netflix.com/browse", "domain": ".netflix.com"},
     "spotify": {"url": "https://open.spotify.com/", "domain": ".spotify.com"}
 }
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Accept-Encoding": "gzip, deflate, br, zstd"
 }
 
 def display_menu():
     print(Style.BRIGHT + Fore.BLUE + "\n📁 Cookie Validator\n")
     print(Fore.BLUE + "1. Netflix")
     print(Fore.BLUE + "2. Spotify")
-    print(Fore.BLUE + "3. Exit")
+    print(Fore.BLUE + "3. Discord Link")
+    print(Fore.BLUE + "4. Exit")
     print(Fore.CYAN + "\nChoose an option: ", end='')
 
 def is_cookie_valid(service, cookie_dict):
@@ -38,25 +40,48 @@ def is_cookie_valid(service, cookie_dict):
         content = response.text.lower()
 
         if service == "netflix":
-            # Netflix logged-in users will see "profile-gate-label" or user-specific data
-            return "profile-gate-label" in content or "profile-gate" in content or "/SignOut" in content
+            return "profile-gate" in content or "/SignOut" in content.lower()
 
         elif service == "spotify":
-            # Spotify dashboard includes 'Your Library' or user's display name
-            return "your library" in content or "profile" in content or "account overview" in content
+            return "your library" in content or "account overview" in content
 
         return False
     except Exception as e:
         print(Fore.RED + f"Error checking cookie: {e}")
         return False
 
-def is_valid_cookie_format(cookie_data, domain_required):
-    if not isinstance(cookie_data, list):
-        return False
-    return any(cookie.get("domain") == domain_required for cookie in cookie_data)
-
-def convert_to_cookie_dict(cookie_data):
+def convert_json_to_dict(cookie_data):
     return {c["name"]: c["value"] for c in cookie_data if "name" in c and "value" in c}
+
+def convert_header_string_to_dict(header_str):
+    cookie = SimpleCookie()
+    cookie.load(header_str)
+    return {key: morsel.value for key, morsel in cookie.items()}
+
+def convert_netscape_to_dict(lines):
+    cookies = {}
+    for line in lines:
+        if line.strip().startswith("#") or not line.strip():
+            continue
+        parts = line.strip().split('\t')
+        if len(parts) >= 7:
+            name = parts[5]
+            value = parts[6]
+            cookies[name] = value
+    return cookies
+
+def detect_format(text):
+    try:
+        data = json.loads(text)
+        if isinstance(data, list) and all("name" in c and "value" in c for c in data):
+            return "json", data
+    except:
+        pass
+    if "HostOnly" in text or text.count('\t') >= 6:
+        return "netscape", text.strip().splitlines()
+    if "=" in text and ";" in text:
+        return "header", text
+    return "unknown", None
 
 def main():
     while True:
@@ -64,9 +89,13 @@ def main():
         display_menu()
         choice = input().strip()
 
-        if choice == '3':
+        if choice == '4':
             print(Fore.MAGENTA + "👋 Exiting... Goodbye!")
             break
+        elif choice == '3':
+            print(Fore.CYAN + "\n🔗 Join our Discord: https://discord.gg/JjDgy47Pkp")
+            input(Fore.YELLOW + "\nPress Enter to return to menu...")
+            continue
         elif choice not in ['1', '2']:
             print(Fore.RED + "❌ Invalid option. Please try again.")
             input(Fore.YELLOW + "Press Enter to continue...")
@@ -103,19 +132,25 @@ def main():
             filepath = os.path.join(first_folder, file)
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
-                    cookie_data = json.load(f)
+                    raw = f.read()
 
-                if not is_valid_cookie_format(cookie_data, domain_required):
-                    print(Fore.YELLOW + f"{file} ➜ SKIPPED ⚠️ (Not a {service} cookie)")
+                format_type, data = detect_format(raw)
+                if format_type == "json":
+                    cookie_dict = convert_json_to_dict(data)
+                elif format_type == "header":
+                    cookie_dict = convert_header_string_to_dict(data)
+                elif format_type == "netscape":
+                    cookie_dict = convert_netscape_to_dict(data)
+                else:
+                    print(Fore.YELLOW + f"{file} ➜ SKIPPED ⚠️ (Unsupported format)")
                     skipped_count += 1
                     continue
 
-                cookie_dict = convert_to_cookie_dict(cookie_data)
                 if is_cookie_valid(service, cookie_dict):
                     print(Fore.GREEN + f"{file} ➜ VALID ✅")
                     valid_count += 1
                     with open(os.path.join(valid_folder, file), 'w', encoding='utf-8') as vf:
-                        json.dump(cookie_data, vf, indent=2)
+                        vf.write(raw)
                 else:
                     print(Fore.RED + f"{file} ➜ INVALID ❌")
                     invalid_count += 1
