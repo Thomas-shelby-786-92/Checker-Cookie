@@ -40,7 +40,7 @@ def is_cookie_valid(service, cookie_dict):
         content = response.text.lower()
 
         if service == "netflix":
-            return "profile-gate" in content or "/SignOut" in content.lower()
+            return "profile-gate" in content or "/signout" in content
 
         elif service == "spotify":
             return "your library" in content or "account overview" in content
@@ -104,22 +104,31 @@ def main():
         service = "netflix" if choice == '1' else "spotify"
         domain_required = BASE_URLS[service]['domain']
 
-        base_path = os.getcwd()
-        subdirs = [d for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d))]
-        if not subdirs:
-            print(Fore.RED + "⚠️ No folder found to read cookies from.")
+        # Get the folder where the script is running from
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Look for cookies folder inside the script directory
+        cookies_folder = os.path.join(script_dir, "cookies")
+
+        print(Fore.CYAN + f"\n🔍 Reading cookies from folder: {cookies_folder}")
+
+        if not os.path.exists(cookies_folder):
+            print(Fore.RED + "⚠️ Cookies folder not found!")
             input(Fore.YELLOW + "Press Enter to exit...")
             return
 
-        first_folder = os.path.join(base_path, subdirs[0])
-        txt_files = [f for f in os.listdir(first_folder) if f.endswith('.txt')]
+        txt_files = [f for f in os.listdir(cookies_folder) if f.endswith('.txt')]
+
+        print(Fore.CYAN + f"Found {len(txt_files)} .txt files:")
+        for f in txt_files:
+            print(Fore.CYAN + f" - {f}")
 
         if not txt_files:
-            print(Fore.RED + f"⚠️ No .txt files found in folder: {subdirs[0]}")
+            print(Fore.RED + "⚠️ No .txt files found in the cookies folder.")
             input(Fore.YELLOW + "Press Enter to exit...")
             return
 
-        valid_folder = os.path.join(base_path, "valid")
+        valid_folder = os.path.join(script_dir, "valid")
         os.makedirs(valid_folder, exist_ok=True)
 
         valid_count = 0
@@ -129,7 +138,7 @@ def main():
         print(Fore.CYAN + "\n🔍 Checking cookies...\n")
 
         for file in tqdm(txt_files, desc="Processing", ncols=75, colour='blue'):
-            filepath = os.path.join(first_folder, file)
+            filepath = os.path.join(cookies_folder, file)
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
                     raw = f.read()
